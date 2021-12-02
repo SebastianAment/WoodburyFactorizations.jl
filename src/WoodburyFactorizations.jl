@@ -2,12 +2,11 @@ module WoodburyFactorizations
 using LinearAlgebra
 using LinearAlgebra: checksquare
 
-# IDEA: can optimize threshold constant c which makes WoodburyFactorizations computationally beneficial
-# using LazyArrays: applied, ApplyMatrix
+# IDEA: can optimize threshold constant c which makes Woodbury Identity computationally advantageous over direct factorization
 using LazyInverses
 
 const AbstractMatOrFac{T} = Union{AbstractMatrix{T}, Factorization{T}}
-export Woodbury
+export Woodbury, WoodburyFactorization
 
 # represents A + αUCV
 # things that prevent C from being a scalar: checkdims, factorize, ...
@@ -188,7 +187,7 @@ Base.:*(a::Number, W::Woodbury) = Woodbury(a*W.A, W.U, a*W.C, W.V, W.α) # IDEA:
 Base.:*(W::Woodbury, a::Number) = a*W
 
 Base.:*(W::Woodbury, x::AbstractVecOrMat) = mul!(similar(x), W, x)
-Base.:*(B::AbstractMatrix, W::Woodbury) = (W'*B')'
+Base.:*(B::AbstractMatrix, W::Woodbury) = adjoint(W'*B')
 function LinearAlgebra.mul!(y::AbstractVector, W::Woodbury, x::AbstractVector, α::Real = 1, β::Real = 0)
 	s, t = get_temporaries(W, x)
 	mul!!(y, W, x, α, β, s, t)
