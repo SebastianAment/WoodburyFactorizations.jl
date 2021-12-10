@@ -14,6 +14,8 @@ function getW(n, m; diagonal = true, symmetric = false)
     W = Woodbury(A, U, C, V)
 end
 
+Base.AbstractMatrix(F::BunchKaufman) = Symmetric(Matrix(F))
+
 @testset "Woodbury" begin
     n = 5
     m = 2
@@ -29,6 +31,8 @@ end
     X = randn(size(W, 2), 3)
     @test W*X ≈ MW*X
     @test X'*W ≈ X'*MW
+    @test W == copy(W) # testing isequal and copy
+    @test W == deepcopy(W) # testing isequal and deepcopy
 
     # in-place multiplication
     y = randn(size(W, 1)) # with vector
@@ -132,15 +136,17 @@ end
     @test size(FD) == (1, 1)
 
     # test rank 1 constructor
-    A = exp(randn())*I(n)
+    x = randn(n)
+    A = Diagonal(2 .+ exp.(randn(n)))
     u = randn(n)
     W = Woodbury(A, u)
     @test Matrix(W) ≈ A + u*u'
+    b = W*x
+    @test W \ b ≈ x
+
     v = randn(n)
     W = Woodbury(A, u, v')
     @test Matrix(W) ≈ A + u*v'
-
-    x = randn(n)
     b = W*x
     @test W \ b ≈ x
 
@@ -155,12 +161,14 @@ end
     W = Woodbury(A, C)
     @test W isa Woodbury
     @test Matrix(W) ≈ 2A
-
     # tests with α = -
     W = Woodbury(I(n), C, -1)
+    # display(W)
     @test Matrix(W) ≈ I(n) - A
     @test inv(W) ≈ inv(I(n) - A)
+
     FW = factorize(W)
+    @test FW isa Inverse
     @test Matrix(FW) ≈ I(n) - A
     @test Matrix(inverse(FW)) ≈ inv(I(n) - A)
     MW = I(n) - A

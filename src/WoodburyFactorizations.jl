@@ -2,6 +2,8 @@ module WoodburyFactorizations
 using LinearAlgebra
 using LinearAlgebra: checksquare
 
+include("util.jl")
+
 # IDEA: can optimize threshold constant c which makes Woodbury Identity computationally advantageous over direct factorization
 using LazyInverses
 
@@ -101,7 +103,6 @@ function woodbury(A, U, C, V, α = 1, c::Real = 1)
 	end
 	return W
 end
-# woodbury(A, L::LowRank, α = 1) = Woodbury(A, L, α)
 
 ################################## Base ########################################
 Base.size(W::Woodbury) = size(W.A)
@@ -111,14 +112,22 @@ function Base.AbstractMatrix(W::Woodbury)
 	Matrix(W.A) + W.α * *(W.U, W.C, W.V)
 end
 Base.Matrix(W::Woodbury) = AbstractMatrix(W)
+function Base.copy(W::Woodbury)
+	U = copy(W.U)
+	V = W.U ≡ W.V' ? U' : copy(W.V)
+	t = tuple(copy.(W.temporaries)...)
+	Woodbury(copy(W.A), U, copy(W.C), V, W.α, W.logabsdet, t)
+end
 function Base.deepcopy(W::Woodbury)
 	U = deepcopy(W.U)
-	V = U ≡ V' ? U' : deepcopy(V)
-	Woodbury(deepcopy(W.A), U, deepcopy(W.C), V, W.α, W.logabsdet)
+	V = W.U ≡ W.V' ? U' : deepcopy(W.V)
+	t = tuple(deepcopy.(W.temporaries)...)
+	Woodbury(deepcopy(W.A), U, deepcopy(W.C), V, W.α, W.logabsdet, t)
 end
-Base.copy(W::Woodbury) = deepcopy(W)
-
 Base.inv(W::Woodbury) = inv(factorize(W))
+function Base.isequal(W1::Woodbury, W2::Woodbury)
+	W1.A == W2.A && W1.U == W2.U && W1.C == W2.C && W1.V == W2.V && W1.α == W2.α
+end
 
 # sufficient but not necessary condition, useful for quick check
 _ishermitian(A::Union{Real, AbstractMatOrFac}) = ishermitian(A)
@@ -133,9 +142,9 @@ end
 LinearAlgebra.ishermitian(W::Woodbury) = _ishermitian(W) || ishermitian(Matrix(W))
 LinearAlgebra.issymmetric(W::Woodbury) = eltype(W) <: Real && ishermitian(W)
 
-# type piracy, are moving into Base of Julia 1.8
+# WARNING: type piracy, are moving into Base of Julia 1.8, remove when released
 LinearAlgebra.logabsdet(C::Union{Cholesky, CholeskyPivoted}) = logdet(C), one(eltype(C))
-LinearAlgebra.adjoint(x::Union{Cholesky, CholeskyPivoted}) = x
+# LinearAlgebra.adjoint(x::Union{Cholesky, CholeskyPivoted}) = x
 
 LinearAlgebra.logabsdet(x::Number) = log(abs(x)), sign(x)
 LinearAlgebra.factorize(x::Number) = x
@@ -186,7 +195,7 @@ end
 Base.:*(a::Number, W::Woodbury) = Woodbury(a*W.A, W.U, a*W.C, W.V, W.α) # IDEA: could take over logabsdet efficiently
 Base.:*(W::Woodbury, a::Number) = a*W
 
-Base.:*(W::Woodbury, x::AbstractVecOrMat) = mul!(similar(x), W, x)
+Base.:*(W::Woodbury, x::AbstractVecOrMat) = mul!(zero(x), W, x)
 Base.:*(B::AbstractMatrix, W::Woodbury) = adjoint(W'*B')
 function LinearAlgebra.mul!(y::AbstractVector, W::Woodbury, x::AbstractVector, α::Real = 1, β::Real = 0)
 	s, t = get_temporaries(W, x)
