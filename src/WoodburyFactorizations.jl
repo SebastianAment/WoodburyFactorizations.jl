@@ -192,8 +192,12 @@ end
 
 ######################## Linear Algebra primitives #############################
 # IDEA: have efficient methods of hermitian WoodburyFactorization
-Base.:*(a::Number, W::Woodbury) = Woodbury(a*W.A, W.U, a*W.C, W.V, W.α) # IDEA: could take over logabsdet efficiently
-Base.:*(W::Woodbury, a::Number) = a*W
+Base.:*(a::Number, W::Woodbury) = Woodbury(a * W.A, W.U, a * W.C, W.V, W.α) # IDEA: could take over logabsdet efficiently
+Base.:*(W::Woodbury, a::Number) = a * W
+
+Base.:\(a::Number, W::Woodbury) = W / a # IDEA: could take over logabsdet efficiently
+Base.:/(W::Woodbury, a::Number) = Woodbury(W.A / a, W.U, W.C / a, W.V, W.α)
+
 
 Base.:*(W::Woodbury, x::AbstractVecOrMat) = mul!(zero(x), W, x)
 Base.:*(B::AbstractMatrix, W::Woodbury) = adjoint(W'*B')

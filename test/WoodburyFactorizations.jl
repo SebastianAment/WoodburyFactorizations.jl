@@ -48,7 +48,10 @@ Base.AbstractMatrix(F::BunchKaufman) = Symmetric(Matrix(F))
     @test Y ≈ B
 
     @test α*W isa Woodbury
-    @test Matrix(α*W) ≈ α*Matrix(W) # with scalar
+    @test Matrix(α * W) ≈ α * Matrix(W) # with scalar
+    @test Matrix(W * α) ≈ Matrix(W) * α # with scalar
+    @test Matrix(W / α) ≈ Matrix(W) / α # with scalar
+    @test Matrix(α \ W) ≈ α \ Matrix(W) # with scalar
     @test logdet(abs(α)*W) ≈ logdet(abs(α)*Matrix(W)) # checking that logdet works correctly
 
     @test eltype(W) == Float64

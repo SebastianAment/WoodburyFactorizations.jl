@@ -1,7 +1,7 @@
 name = "WoodburyFactorizations"
 uuid = "9f1bac23-581c-4ebc-bd36-df60d764636d"
 authors = ["Sebastian Ament <sebastianeament@gmail.com>"]
-version = "1.0.1"
+version = "1.0.2"
 
 [deps]
 LazyInverses = "9f18896c-49a9-43cc-8eef-c455a8a119c6"
