@@ -142,13 +142,6 @@ end
 LinearAlgebra.ishermitian(W::Woodbury) = _ishermitian(W) || ishermitian(Matrix(W))
 LinearAlgebra.issymmetric(W::Woodbury) = eltype(W) <: Real && ishermitian(W)
 
-# WARNING: type piracy, are moving into Base of Julia 1.8, remove when released
-LinearAlgebra.logabsdet(C::Union{Cholesky, CholeskyPivoted}) = logdet(C), one(eltype(C))
-# LinearAlgebra.adjoint(x::Union{Cholesky, CholeskyPivoted}) = x
-
-LinearAlgebra.logabsdet(x::Number) = log(abs(x)), sign(x)
-LinearAlgebra.factorize(x::Number) = x
-
 function LinearAlgebra.isposdef(W::Woodbury)
 	W.logabsdet isa Nothing ? isposdef(factorize(W)) : (W.logabsdet[2] > 0)
 end

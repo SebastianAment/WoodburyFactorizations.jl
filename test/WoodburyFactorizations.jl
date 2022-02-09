@@ -160,7 +160,7 @@ Base.AbstractMatrix(F::BunchKaufman) = Symmetric(Matrix(F))
     # CholeskyPivoted constructor
     A = randn(1, n)
     A = A'A
-    C = cholesky(A, Val(true), check = false)
+    C = cholesky(A, RowMaximum(), check = false)
     W = Woodbury(A, C)
     @test W isa Woodbury
     @test Matrix(W) ≈ 2A
