@@ -8,6 +8,8 @@ include("util.jl")
 using LazyInverses
 
 const AbstractMatOrFac{T} = Union{AbstractMatrix{T}, Factorization{T}}
+const DTYPE = Float64 # default data type
+
 export Woodbury, WoodburyFactorization
 
 # represents A + αUCV
@@ -203,22 +205,24 @@ function LinearAlgebra.mul!(y::AbstractMatrix, W::Woodbury, x::AbstractMatrix, �
 	mul!!(y, W, x, α, β, s, t) # Pre-allocate!
 end
 # allocates s, t arrays for multiplication if not pre-allocated in W
-allocate_temporaries(W::Woodbury, T::DataType = Float64) = allocate_temporaries(W.U, W.V, T)
-function allocate_temporaries(W::Woodbury, n::Int, T::DataType = Float64)
+function allocate_temporaries(W::Woodbury, T::DataType = eltype(W))
+	allocate_temporaries(W.U, W.V, T)
+end
+function allocate_temporaries(W::Woodbury, n::Int, T::DataType = eltype(W))
 	allocate_temporaries(W.U, W.V, n, T)
 end
-function allocate_temporaries(U, V, T::DataType = Float64)
+function allocate_temporaries(U, V, T::DataType = promote_type(eltype(U), eltype(V)))
 	allocate_temporaries(size(U, 2), size(V, 1), T)
 end
-function allocate_temporaries(U, V, n::Int, T::DataType = Float64)
+function allocate_temporaries(U, V, n::Int, T::DataType = promote_type(eltype(U), eltype(V)))
 	allocate_temporaries(size(U, 2), size(V, 1), n, T)
 end
-function allocate_temporaries(nu::Int, nv::Int, T::DataType = Float64)
+function allocate_temporaries(nu::Int, nv::Int, T::DataType = DTYPE)
 	s = zeros(T, nv)
 	t = zeros(T, nu)
 	return s, t
 end
-function allocate_temporaries(nu::Int, nv::Int, n::Int, T::DataType = Float64)
+function allocate_temporaries(nu::Int, nv::Int, n::Int, T::DataType = DTYPE)
 	s = zeros(T, nv, n)
 	t = zeros(T, nv, n)
 	return s, t
